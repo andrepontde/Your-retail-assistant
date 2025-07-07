@@ -15,14 +15,29 @@ public class Main {
             System.err.println("Environment variable 'postpsw' not set!");
             return;
         }
-        String tableName = "productTrial";
+        String tableName = "productTrial2";
         Connection conn = dbConn.connectToDB("retailassistant", "postgres", password);
-        dbConn.createTable(conn, tableName);
-        String[] columns = {"name", "type"};
-        Object[] values = {"Test Product", "Electronics"};
 
-        Map<String, Object> dataMap = DbConnection.mapColumnsToValues(columns, values);
+        // Create a map with your column definitions
+        Map<String, String> tcolumns = new HashMap<>();
+        tcolumns.put("name", "VARCHAR(100)");
+        tcolumns.put("type", "VARCHAR(50)");
+        tcolumns.put("price", "VARCHAR(100)");
+        tcolumns.put("description", "TEXT");
 
+        dbConn.createTable(conn, tableName, tcolumns);
+        String[] icolumns = tcolumns.keySet().toArray(new String[0]);
+        Object[] values = new Object[icolumns.length];
+        Scanner scanner = new Scanner(System.in);
+        for (int i = 0; i < icolumns.length; i++) {
+            System.out.print("Enter value for " + icolumns[i] + ": ");
+            values[i] = scanner.nextLine();
+        }
+        scanner.close();
+
+        Map<String, Object> dataMap = DbConnection.mapColumnsToValues(icolumns, values);
         dbConn.insert_data(conn, tableName, dataMap);
+
+        dbConn.readData(conn, tableName);
     }
 }
