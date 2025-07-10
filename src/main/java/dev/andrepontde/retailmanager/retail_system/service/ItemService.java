@@ -5,9 +5,14 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import dev.andrepontde.retailmanager.retail_system.dto.ItemDTO;
+import dev.andrepontde.retailmanager.retail_system.entity.Inventory;
 import dev.andrepontde.retailmanager.retail_system.entity.Item;
+import dev.andrepontde.retailmanager.retail_system.entity.Store;
+import dev.andrepontde.retailmanager.retail_system.entity.User;
+import dev.andrepontde.retailmanager.retail_system.repository.InventoryRepository;
 import dev.andrepontde.retailmanager.retail_system.repository.ItemRepository;
 
 
@@ -19,11 +24,25 @@ public class ItemService {
     
     @Autowired
     private ItemRepository itemRepository;
+    
+    @Autowired
+    private InventoryRepository inventoryRepository;
+    
+    @Autowired
+    private UserService userService;
 
     // Create or update a item
+    @Transactional
     public ItemDTO saveItem(ItemDTO itemDTO) {
         Item item = toEntity(itemDTO);
         item = itemRepository.save(item);
+        
+        // If this is a new item (no ID provided) and initialQuantity is specified,
+        // automatically create inventory record for the current user's store
+        if (itemDTO.getId() == null && itemDTO.getInitialQuantity() != null) {
+            createInitialInventory(item, itemDTO.getInitialQuantity());
+        }
+        
         return toDTO(item);
     }
 
@@ -55,6 +74,13 @@ public class ItemService {
                 .collect(Collectors.toList());
     }
 
+    // Retrieve items by name (multiple items can have the same name)
+    public List<ItemDTO> getItemsByName(String name) {
+        return itemRepository.findByName(name).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     // Delete a item
     public void deleteItem(Long id) {
         if (!itemRepository.existsById(id)) {
@@ -68,8 +94,7 @@ public class ItemService {
         ItemDTO dto = new ItemDTO(
                 item.getName(),
                 item.getCategory(),
-                item.getPrice(),
-                item.getStockQuantity()
+                item.getPrice()
         );
         dto.setId(item.getId());
         return dto;
@@ -80,8 +105,33 @@ public class ItemService {
         return new Item(
                 itemDTO.getName(),
                 itemDTO.getCategory(),
-                itemDTO.getPrice(),
-                itemDTO.getStockQuantity()
+                itemDTO.getPrice()
         );
+    }
+    
+    /**
+     * Create initial inventory record for the current user's store when adding a new item.
+     * This automatically makes the item available in their store with the specified quantity.
+     */
+    private void createInitialInventory(Item item, Integer initialQuantity) {
+        try {
+            // Get the current user and their store
+            User currentUser = userService.getCurrentUser();
+            Store userStore = currentUser.getPrimaryStore();
+            
+            if (userStore != null) {
+                // Create inventory record for the user's store
+                Inventory inventory = new Inventory();
+                inventory.setStore(userStore);
+                inventory.setItem(item);
+                inventory.setQuantity(initialQuantity);
+                
+                inventoryRepository.save(inventory);
+            }
+        } catch (Exception e) {
+            // If user context is not available (e.g., admin creating global items),
+            // silently skip inventory creation
+            // This allows the system to work in different contexts
+        }
     }
 }

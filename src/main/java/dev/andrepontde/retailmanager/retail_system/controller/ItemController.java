@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import dev.andrepontde.retailmanager.retail_system.dto.ItemDTO;
@@ -144,10 +143,7 @@ public class ItemController {
     public ResponseEntity<List<ItemDTO>> getItemsByName(@PathVariable("name") String name) {
         try {
             // Call the service layer to get items with the specified name
-            // Note: You'll need to add this method to your ItemService class
-            // For now, let's use getItemsByCategory as a placeholder pattern
-            // TODO: Add getItemsByName(String name) method to ItemService
-            List<ItemDTO> items = itemService.getItemsByCategory(name); // Temporary - replace with getItemsByName
+            List<ItemDTO> items = itemService.getItemsByName(name);
             
             // Check if any items were found with this name
             if (items.isEmpty()) {
@@ -162,36 +158,5 @@ public class ItemController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    // READ - Get items with low stock (Business logic example)
-    // This method handles GET requests to /api/items/low-stock?threshold=5
-    // It demonstrates using query parameters for filtering
-    @GetMapping("/low-stock")
-    public ResponseEntity<List<ItemDTO>> getLowStockItems(@RequestParam(value = "threshold", defaultValue = "5") int threshold) {
-        try {
-            // Get all items first
-            List<ItemDTO> allItems = itemService.getAllItems();
-            
-            // Filter items with stock quantity below the threshold
-            // This demonstrates business logic in the controller layer
-            // (Though ideally this filtering should be done in the service layer)
-            List<ItemDTO> lowStockItems = allItems.stream()
-                    .filter(item -> item.getStockQuantity() < threshold)
-                    .collect(java.util.stream.Collectors.toList());
-            
-            // Check if any low stock items were found
-            if (lowStockItems.isEmpty()) {
-                // Return HTTP 204 No Content if no low stock items
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            }
-            
-            // Return HTTP 200 OK with the list of low stock items
-            return new ResponseEntity<>(lowStockItems, HttpStatus.OK);
-        } catch (Exception e) {
-            // For any unexpected errors, return 500 Internal Server Error
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
 
 }

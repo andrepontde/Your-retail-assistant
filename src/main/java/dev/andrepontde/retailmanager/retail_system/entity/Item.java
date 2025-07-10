@@ -25,17 +25,12 @@ public class Item {
     @Min(value = 0, message = "Price must be at least 0")
     private Double price;
 
-    @NotNull(message = "Stock cannot be null")
-    @Min(value = 0, message = "There must be at least 0 item in stock")
-    private int stockQuantity;
-
     public Item(){}
 
-    public Item(String name, String category, Double price, int stockQuantity) {
+    public Item(String name, String category, Double price) {
         this.name = name;
         this.category = category;
         this.price = price;
-        this.stockQuantity = stockQuantity;
     }
 
     public Long getId() {
@@ -69,15 +64,5 @@ public class Item {
     public void setPrice(Double price) {
         this.price = price;
     }
-
-    public int getStockQuantity() {
-        return stockQuantity;
-    }
-
-    public void setStockQuantity(int stockQuantity) {
-        this.stockQuantity = stockQuantity;
-    }
-
-    
 
 }   
