@@ -44,6 +44,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll() // For H2 database console
                 
+                // Static resources - no authentication required
+                .requestMatchers("/", "/index.html", "/styles.css", "/script.js").permitAll()
+                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
+                
                 // Protected endpoints - authentication required
                 .requestMatchers("/api/inventory/**").authenticated()
                 .requestMatchers("/api/items/**").authenticated()
