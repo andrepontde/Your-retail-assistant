@@ -1,7 +1,20 @@
 // Retail Management System API Client
 class RetailAPI {
     constructor() {
-        this.baseURL = 'http://localhost:8080/api';
+        // Dynamically determine the base URL based on current page location
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const port = window.location.port || (protocol === 'https:' ? '443' : '80');
+        
+        // If accessing via localhost/127.0.0.1, use localhost, otherwise use the current hostname
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            this.baseURL = `${protocol}//${hostname}:8080/api`;
+        } else {
+            // When accessing from phone, use the same hostname/IP as the web page
+            this.baseURL = `${protocol}//${hostname}:8080/api`;
+        }
+        
+        console.log('API Base URL:', this.baseURL);
         this.token = localStorage.getItem('jwt_token');
         this.updateAuthStatus();
     }

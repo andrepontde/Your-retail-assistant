@@ -42,9 +42,15 @@ A comprehensive, enterprise-grade retail management system built with Spring Boo
 - **Real-time feedback** and error handling
 - **Clean, professional UI** with modern styling
 
-## 🛠️ Technology Stack
+### � **Mobile App Ready**
+- **CORS-enabled API** for cross-origin requests
+- **Public discovery endpoints** for server information
+- **Network-accessible deployment** for mobile testing
+- **RESTful API design** optimized for mobile consumption
 
-- **Backend:** Spring Boot 3.5.3, Java 24
+## �🛠️ Technology Stack
+
+- **Backend:** Spring Boot 3.5.3, Java 21
 - **Database:** PostgreSQL with JPA/Hibernate
 - **Security:** Spring Security with JWT authentication
 - **Frontend:** HTML5, CSS3, Vanilla JavaScript
@@ -55,7 +61,7 @@ A comprehensive, enterprise-grade retail management system built with Spring Boo
 
 Before you can run this application, make sure you have the following installed:
 
-- **Java 24** or higher
+- **Java 21** or higher
 - **Maven 3.6+**
 - **Docker & Docker Compose**
 - **Git** (for cloning the repository)
@@ -68,30 +74,33 @@ git clone https://github.com/andrepontde/Your-retail-assistant.git
 cd Your-retail-assistant
 ```
 
-### 2. Start the Database
+### 2. Start the Complete System
 ```bash
-docker-compose up -d
+docker-compose up --build
 ```
 
-This will start a PostgreSQL database on port `5332` with the following credentials:
-- **Username:** `postgres`
-- **Password:** `261010`
-- **Database:** `postgres`
+This will start both the application and PostgreSQL database with a single command.
 
-### 3. Run the Application
-```bash
-./mvnw spring-boot:run
-```
+The system includes:
+- **PostgreSQL database** on port `5332`
+- **Spring Boot application** on port `8080`
+- **Automatic database connection** and schema creation
 
-The application will start on `http://localhost:8080`
+### 3. Access the Application
+- **Web Interface**: `http://localhost:8080`
+- **API Health Check**: `http://localhost:8080/api/public/health`
+- **Server Information**: `http://localhost:8080/api/public/server-info`
 
-### 4. Access the Web Interface
-Open your browser and navigate to `http://localhost:8080` to access the interactive API testing interface.
+### 4. Network Access (Mobile Development)
+To access from other devices on your network:
+- Find your computer's IP address (e.g., `192.168.1.100`)
+- Configure Windows Firewall to allow port 8080
+- Access via: `http://your-ip:8080`
 
 ## 🔧 Configuration
 
 ### Database Configuration
-The application is pre-configured to connect to the Docker PostgreSQL instance. If you need to modify the database settings, update the `application.properties` file:
+The application automatically connects to the containerized PostgreSQL instance:
 
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5332/postgres
@@ -108,6 +117,20 @@ jwt.expiration=86400
 ```
 
 ## 📚 API Documentation
+
+### Public Endpoints (No Authentication Required)
+
+#### Server Information
+```http
+GET /api/public/server-info
+```
+Returns server capabilities and version information for mobile app discovery.
+
+#### Health Check
+```http
+GET /api/public/health
+```
+Returns server health status and timestamp.
 
 ### Authentication Endpoints
 
@@ -225,8 +248,29 @@ src/
 - **JWT Authentication:** Stateless authentication with secure token generation
 - **Role-Based Access:** Three-tier permission system (Admin, Manager, Associate)
 - **Password Encryption:** BCrypt hashing for secure password storage
-- **CORS Protection:** Configurable cross-origin request handling
+- **CORS Support:** Configured for mobile app and cross-origin requests
 - **SQL Injection Prevention:** JPA/Hibernate parameterized queries
+
+## 📱 Mobile App Development
+
+### API Features for Mobile
+- **CORS-enabled endpoints** for cross-platform access
+- **Public discovery API** at `/api/public/server-info`
+- **Health monitoring** at `/api/public/health`
+- **JWT-based authentication** perfect for mobile apps
+- **RESTful design** with JSON responses
+
+### Network Access Setup
+1. **Start the application** with `docker-compose up --build`
+2. **Find your computer's IP** (e.g., `ipconfig` on Windows)
+3. **Configure firewall** to allow port 8080
+4. **Access from mobile** via `http://your-ip:8080`
+
+### Mobile App Architecture
+The system supports both:
+- **Official hosted server** deployment
+- **Local server instances** for development/testing
+- **Multi-server switching** in mobile apps
 
 ## 🧪 Testing
 
@@ -238,9 +282,24 @@ src/
 ### API Testing
 The application includes a built-in web interface for testing all API endpoints. Simply navigate to `http://localhost:8080` and use the interactive forms to test functionality.
 
+### Mobile Testing
+Test API endpoints from mobile devices using the network IP address (e.g., `http://192.168.1.100:8080/api/public/health`).
+
 ## 🚀 Deployment
 
-### Docker Deployment
+### Complete Docker Deployment
+```bash
+# Start both application and database
+docker-compose up --build
+
+# Run in background
+docker-compose up --build -d
+
+# Stop services
+docker-compose down
+```
+
+### Traditional Deployment
 ```bash
 # Build the application
 ./mvnw clean package
@@ -295,19 +354,28 @@ If you encounter any issues or have questions:
 
 ## 🎯 Roadmap
 
+### ✅ Recently Added
+- **CORS support** for mobile app development
+- **Public API endpoints** for server discovery
+- **Complete Docker deployment** with single command
+- **Network access configuration** for mobile testing
+- **Java 21 compatibility** and optimized build process
+
 ### Upcoming Features
-- **Mobile app integration** with REST API
+- **Native mobile applications** (React Native/Flutter)
 - **Advanced analytics dashboard** with charts and graphs
 - **Barcode scanning support** for inventory management
 - **Email notifications** for low stock and sales
 - **Advanced reporting** with PDF generation
 - **Integration with payment gateways**
+- **Multi-tenant support** for SaaS deployment
 
 ### Performance Improvements
+- **Redis caching layer** implementation
 - **Database indexing optimization**
-- **Caching layer implementation**
-- **API rate limiting**
-- **Batch processing for large operations**
+- **API rate limiting** and throttling
+- **Batch processing** for large operations
+- **Microservices architecture** for scale
 
 ---
 

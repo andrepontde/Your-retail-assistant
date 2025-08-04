@@ -1,5 +1,5 @@
 # Multi-stage build for production deployment
-FROM openjdk:24-jdk-slim as builder
+FROM eclipse-temurin:21-jdk-alpine as builder
 
 WORKDIR /app
 COPY pom.xml .
@@ -13,18 +13,18 @@ RUN ./mvnw dependency:go-offline -B
 COPY src src
 RUN ./mvnw clean package -DskipTests
 
-FROM openjdk:24-jre-slim
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
 # Install curl for health checks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl
 
 # Copy the jar from builder stage
 COPY --from=builder /app/target/*.jar app.jar
 
 # Create non-root user for security
-RUN addgroup --system spring && adduser --system spring --ingroup spring
+RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
 # Expose port
