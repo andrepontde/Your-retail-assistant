@@ -303,4 +303,70 @@ public class SaleService {
         
         return dto;
     }
+
+    /**
+     * Generate a formatted receipt for a sale.
+     * 
+     * @param sale The sale to generate receipt for
+     * @return ReceiptData object with formatted receipt information
+     */
+    public dev.andrepontde.retailmanager.retail_system.controller.SaleController.ReceiptData generateReceipt(SaleDTO sale) {
+        dev.andrepontde.retailmanager.retail_system.controller.SaleController.ReceiptData receipt = 
+            new dev.andrepontde.retailmanager.retail_system.controller.SaleController.ReceiptData();
+        
+        // Generate receipt number (combination of store ID and sale ID)
+        receipt.setReceiptNumber(String.format("R%03d-%06d", 
+            sale.getStore().getId(), sale.getId()));
+        
+        // Store information
+        receipt.setStoreName(sale.getStore().getName());
+        String storeAddress = sale.getStore().getAddress() != null ? 
+            sale.getStore().getAddress() : sale.getStore().getLocation();
+        receipt.setStoreAddress(storeAddress);
+        
+        // Sale date formatting
+        receipt.setSaleDate(sale.getSaleDate().toString());
+        
+        // Convert sale items to receipt items
+        List<dev.andrepontde.retailmanager.retail_system.controller.SaleController.ReceiptItem> receiptItems = 
+            sale.getSaleItems().stream()
+                .map(saleItem -> new dev.andrepontde.retailmanager.retail_system.controller.SaleController.ReceiptItem(
+                    saleItem.getItem().getName(),
+                    saleItem.getQuantity(),
+                    saleItem.getUnitPrice(),
+                    saleItem.getTotalPrice()
+                ))
+                .collect(Collectors.toList());
+        receipt.setItems(receiptItems);
+        
+        // Calculate totals
+        double subtotal = sale.getTotalAmount();
+        double taxRate = 0.10; // 10% tax rate (can be made configurable)
+        double tax = subtotal * taxRate;
+        
+        receipt.setSubtotal(subtotal);
+        receipt.setTax(tax);
+        receipt.setTotal(subtotal + tax);
+        
+        // Payment information
+        receipt.setPaymentMethod(sale.getPaymentMethod() != null ? 
+            sale.getPaymentMethod().toString() : "CASH");
+        
+        // Customer information
+        if (sale.getCustomerEmail() != null || sale.getCustomerPhone() != null) {
+            String customerInfo = "";
+            if (sale.getCustomerEmail() != null) {
+                customerInfo += "Email: " + sale.getCustomerEmail();
+            }
+            if (sale.getCustomerPhone() != null) {
+                if (!customerInfo.isEmpty()) customerInfo += " | ";
+                customerInfo += "Phone: " + sale.getCustomerPhone();
+            }
+            receipt.setCustomerInfo(customerInfo);
+        } else {
+            receipt.setCustomerInfo("Walk-in Customer");
+        }
+        
+        return receipt;
+    }
 }

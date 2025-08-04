@@ -192,4 +192,111 @@ public class SaleController {
             return new ResponseEntity<>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // ================================
+    // RECEIPT GENERATION
+    // ================================
+
+    /**
+     * Generate a formatted receipt for a sale.
+     * 
+     * @param saleId ID of the sale to generate receipt for
+     * @return ResponseEntity with formatted receipt data
+     */
+    @GetMapping("/{saleId}/receipt")
+    public ResponseEntity<?> generateReceipt(@PathVariable Long saleId) {
+        try {
+            Optional<SaleDTO> saleOpt = saleService.getSaleById(saleId);
+            if (saleOpt.isEmpty()) {
+                return new ResponseEntity<>("Sale not found", HttpStatus.NOT_FOUND);
+            }
+
+            SaleDTO sale = saleOpt.get();
+            ReceiptData receipt = saleService.generateReceipt(sale);
+            return new ResponseEntity<>(receipt, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error generating receipt: " + e.getMessage(), 
+                HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * DTO for receipt data
+     */
+    public static class ReceiptData {
+        private String receiptNumber;
+        private String storeName;
+        private String storeAddress;
+        private String saleDate;
+        private List<ReceiptItem> items;
+        private Double subtotal;
+        private Double tax;
+        private Double total;
+        private String paymentMethod;
+        private String customerInfo;
+
+        // Constructors, getters, and setters
+        public ReceiptData() {}
+
+        public String getReceiptNumber() { return receiptNumber; }
+        public void setReceiptNumber(String receiptNumber) { this.receiptNumber = receiptNumber; }
+        
+        public String getStoreName() { return storeName; }
+        public void setStoreName(String storeName) { this.storeName = storeName; }
+        
+        public String getStoreAddress() { return storeAddress; }
+        public void setStoreAddress(String storeAddress) { this.storeAddress = storeAddress; }
+        
+        public String getSaleDate() { return saleDate; }
+        public void setSaleDate(String saleDate) { this.saleDate = saleDate; }
+        
+        public List<ReceiptItem> getItems() { return items; }
+        public void setItems(List<ReceiptItem> items) { this.items = items; }
+        
+        public Double getSubtotal() { return subtotal; }
+        public void setSubtotal(Double subtotal) { this.subtotal = subtotal; }
+        
+        public Double getTax() { return tax; }
+        public void setTax(Double tax) { this.tax = tax; }
+        
+        public Double getTotal() { return total; }
+        public void setTotal(Double total) { this.total = total; }
+        
+        public String getPaymentMethod() { return paymentMethod; }
+        public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+        
+        public String getCustomerInfo() { return customerInfo; }
+        public void setCustomerInfo(String customerInfo) { this.customerInfo = customerInfo; }
+    }
+
+    /**
+     * DTO for receipt line items
+     */
+    public static class ReceiptItem {
+        private String itemName;
+        private Integer quantity;
+        private Double unitPrice;
+        private Double lineTotal;
+
+        public ReceiptItem() {}
+
+        public ReceiptItem(String itemName, Integer quantity, Double unitPrice, Double lineTotal) {
+            this.itemName = itemName;
+            this.quantity = quantity;
+            this.unitPrice = unitPrice;
+            this.lineTotal = lineTotal;
+        }
+
+        public String getItemName() { return itemName; }
+        public void setItemName(String itemName) { this.itemName = itemName; }
+        
+        public Integer getQuantity() { return quantity; }
+        public void setQuantity(Integer quantity) { this.quantity = quantity; }
+        
+        public Double getUnitPrice() { return unitPrice; }
+        public void setUnitPrice(Double unitPrice) { this.unitPrice = unitPrice; }
+        
+        public Double getLineTotal() { return lineTotal; }
+        public void setLineTotal(Double lineTotal) { this.lineTotal = lineTotal; }
+    }
 }

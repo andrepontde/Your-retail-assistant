@@ -331,3 +331,242 @@ input:focus, select:focus {
         transform: translateY(0);
     }
 }
+
+/* ========================= SALES STYLES ========================= */
+
+/* Sale item rows */
+.sale-items {
+    margin: 15px 0;
+}
+
+.sale-items h4 {
+    color: #4a5568;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.sale-item-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.sale-item-row input {
+    flex: 1;
+    min-width: 120px;
+}
+
+.sale-item-row .item-id {
+    max-width: 100px;
+}
+
+.sale-item-row .item-quantity {
+    max-width: 80px;
+}
+
+.sale-item-row button {
+    padding: 8px 12px;
+    min-width: 40px;
+}
+
+/* Receipt container */
+.receipt-container {
+    margin-top: 20px;
+}
+
+.receipt {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 500px;
+    margin: 0 auto;
+    font-family: 'Courier New', monospace;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.receipt-header {
+    text-align: center;
+    border-bottom: 2px solid #000;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.receipt-header h3 {
+    color: #4a5568;
+    margin-bottom: 10px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.receipt-customer {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #ccc;
+}
+
+.receipt-items h4 {
+    color: #4a5568;
+    margin-bottom: 10px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+}
+
+.receipt-table th,
+.receipt-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.receipt-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #4a5568;
+}
+
+.receipt-table td:nth-child(2),
+.receipt-table td:nth-child(3),
+.receipt-table td:nth-child(4),
+.receipt-table th:nth-child(2),
+.receipt-table th:nth-child(3),
+.receipt-table th:nth-child(4) {
+    text-align: right;
+}
+
+.receipt-totals {
+    text-align: right;
+    border-top: 1px solid #ccc;
+    padding-top: 10px;
+    margin-bottom: 15px;
+}
+
+.receipt-totals p {
+    margin: 5px 0;
+}
+
+.grand-total {
+    font-size: 1.2em;
+    font-weight: bold;
+    border-top: 2px solid #000;
+    padding-top: 8px;
+    margin-top: 10px;
+}
+
+.receipt-footer {
+    text-align: center;
+    border-top: 1px dashed #ccc;
+    padding-top: 15px;
+}
+
+.receipt-footer p {
+    margin-bottom: 15px;
+    font-style: italic;
+    color: #666;
+}
+
+/* Sales table */
+.sales-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.sales-table th,
+.sales-table td {
+    border: 1px solid #e2e8f0;
+    padding: 12px;
+    text-align: left;
+}
+
+.sales-table th {
+    background-color: #f7fafc;
+    color: #4a5568;
+    font-weight: 600;
+}
+
+.sales-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.sales-table tr:hover {
+    background-color: #edf2f7;
+}
+
+/* Success message styling */
+.success {
+    background: #c6f6d5;
+    border: 1px solid #9ae6b4;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+    color: #22543d;
+}
+
+.success h4 {
+    color: #22543d;
+    margin-bottom: 10px;
+}
+
+.success p {
+    margin: 5px 0;
+}
+
+/* Print styles */
+@media print {
+    body {
+        background: white;
+    }
+    
+    .container {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .receipt {
+        box-shadow: none;
+        border: 1px solid #000;
+        max-width: none;
+    }
+    
+    .receipt-footer button {
+        display: none;
+    }
+}
+
+/* Mobile responsiveness for sales */
+@media (max-width: 768px) {
+    .sale-item-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .sale-item-row input,
+    .sale-item-row button {
+        width: 100%;
+    }
+    
+    .receipt {
+        padding: 15px;
+        margin: 0;
+    }
+    
+    .receipt-table {
+        font-size: 0.9em;
+    }
+    
+    .sales-table {
+        font-size: 0.8em;
+    }
+    
+    .sales-table th,
+    .sales-table td {
+        padding: 8px 4px;
+    }
+}

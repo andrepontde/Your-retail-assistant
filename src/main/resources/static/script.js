@@ -120,6 +120,7 @@ ${'='.repeat(80)}
         const authSection = document.getElementById('auth-section');
         const itemsSection = document.getElementById('items-section');
         const inventorySection = document.getElementById('inventory-section');
+        const salesSection = document.getElementById('sales-section');
 
         if (this.token) {
             statusElement.textContent = 'Authenticated ✅';
@@ -128,6 +129,7 @@ ${'='.repeat(80)}
             authSection.style.display = 'none';
             itemsSection.style.display = 'block';
             inventorySection.style.display = 'block';
+            salesSection.style.display = 'block';
         } else {
             statusElement.textContent = 'Not Authenticated';
             statusElement.className = '';
@@ -135,6 +137,7 @@ ${'='.repeat(80)}
             authSection.style.display = 'block';
             itemsSection.style.display = 'none';
             inventorySection.style.display = 'none';
+            salesSection.style.display = 'none';
         }
     }
 
@@ -429,12 +432,21 @@ async function transferStock() {
 function displayItems(items, containerId) {
     const container = document.getElementById(containerId);
     
-    if (!items || items.length === 0) {
+    // Ensure items is an array
+    if (!items) {
         container.innerHTML = '<p>No items found.</p>';
         return;
     }
     
-    container.innerHTML = items.map(item => `
+    // Convert single item to array
+    const itemsArray = Array.isArray(items) ? items : [items];
+    
+    if (itemsArray.length === 0) {
+        container.innerHTML = '<p>No items found.</p>';
+        return;
+    }
+    
+    container.innerHTML = itemsArray.map(item => `
         <div class="item-card">
             <div class="item-header">
                 <span class="item-name">${item.name}</span>
@@ -521,6 +533,315 @@ function clearForm(formId) {
             input.value = '';
         }
     });
+}
+
+// Display error message function
+function displayError(message) {
+    api.showMessage(`Error: ${message}`, 'error');
+    
+    // Also log to console for debugging
+    console.error('Error:', message);
+    
+    // Update the response output with error
+    const output = document.getElementById('response-output');
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = `
+[${timestamp}] ERROR
+❌ ${message}
+
+${'='.repeat(80)}
+`;
+    output.textContent = logEntry + output.textContent;
+}
+
+// Display response function
+function displayResponse(response) {
+    // This should only be called for successful responses
+    if (response) {
+        const output = document.getElementById('response-output');
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = `
+[${timestamp}] API Response
+✅ SUCCESS
+
+Response:
+${JSON.stringify(response, null, 2)}
+
+${'='.repeat(80)}
+`;
+        output.textContent = logEntry + output.textContent;
+        api.showMessage('Operation completed successfully!', 'success');
+    }
+}
+
+// ========================= SALES FUNCTIONS =========================
+
+// Add a new sale item row
+function addSaleItemRow() {
+    const container = document.getElementById('sale-items-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'sale-item-row';
+    newRow.innerHTML = `
+        <input type="number" class="item-id" placeholder="Item ID">
+        <input type="number" class="item-quantity" placeholder="Quantity" min="1" value="1">
+        <button type="button" class="btn btn-warning" onclick="removeSaleItemRow(this)">-</button>
+    `;
+    container.appendChild(newRow);
+}
+
+// Remove a sale item row
+function removeSaleItemRow(button) {
+    const container = document.getElementById('sale-items-container');
+    if (container.children.length > 1) {
+        button.parentElement.remove();
+    }
+}
+
+// Create a new sale
+async function createSale() {
+    const customerEmail = document.getElementById('customer-email').value.trim();
+    const customerPhone = document.getElementById('customer-phone').value.trim();
+    const paymentMethod = document.getElementById('payment-method').value;
+    
+    // Collect sale items
+    const itemRows = document.querySelectorAll('.sale-item-row');
+    const saleItems = [];
+    
+    for (const row of itemRows) {
+        const itemId = row.querySelector('.item-id').value;
+        const quantity = row.querySelector('.item-quantity').value;
+        
+        if (itemId && quantity && quantity > 0) {
+            saleItems.push({
+                itemId: parseInt(itemId),
+                quantity: parseInt(quantity)
+            });
+        }
+    }
+    
+    if (saleItems.length === 0) {
+        displayError('Please add at least one item to the sale');
+        return;
+    }
+    
+    const saleData = {
+        customerEmail: customerEmail || null,
+        customerPhone: customerPhone || null,
+        paymentMethod: paymentMethod,
+        saleItems: saleItems.map(item => ({
+            item: { id: item.itemId }, // Backend expects { item: { id: ... } }
+            quantity: item.quantity
+        }))
+    };
+    
+    try {
+        const result = await api.makeRequest('/sales', {
+            method: 'POST',
+            body: JSON.stringify(saleData)
+        });
+        
+        if (result.ok && result.data) {
+            const response = result.data;
+            api.displayResponse('/sales', { method: 'POST', body: JSON.stringify(saleData) }, result);
+            
+            document.getElementById('sale-result').innerHTML = `
+                <div class="success">
+                    <h4>Sale Created Successfully!</h4>
+                    <p><strong>Sale ID:</strong> ${response.id}</p>
+                    <p><strong>Total Amount:</strong> $${response.totalAmount}</p>
+                    <p><strong>Tax Amount:</strong> $${response.taxAmount}</p>
+                    <p><strong>Grand Total:</strong> $${response.grandTotal}</p>
+                    <button class="btn btn-secondary" onclick="generateReceiptForSale(${response.id})">Generate Receipt</button>
+                </div>
+            `;
+            clearForm('sales-section');
+        } else {
+            displayError(result.data?.message || 'Failed to create sale');
+        }
+    } catch (error) {
+        console.error('Error creating sale:', error);
+        displayError('Error creating sale: ' + (error.message || 'Unknown error'));
+    }
+}
+
+// Generate receipt for a specific sale ID
+async function generateReceiptForSale(saleId) {
+    document.getElementById('receipt-sale-id').value = saleId;
+    await generateReceipt();
+}
+
+// Generate receipt
+async function generateReceipt() {
+    const saleId = document.getElementById('receipt-sale-id').value;
+    
+    if (!saleId) {
+        displayError('Please enter a Sale ID');
+        return;
+    }
+    
+    try {
+        const result = await api.makeRequest(`/sales/${saleId}/receipt`, {
+            method: 'GET'
+        });
+        
+        if (result.ok && result.data) {
+            const response = result.data;
+            api.displayResponse(`/sales/${saleId}/receipt`, { method: 'GET' }, result);
+            
+            const receiptHtml = formatReceipt(response);
+            document.getElementById('receipt-display').innerHTML = receiptHtml;
+        } else {
+            displayError(result.data?.message || 'Failed to generate receipt');
+        }
+    } catch (error) {
+        console.error('Error generating receipt:', error);
+        displayError('Error generating receipt: ' + (error.message || 'Unknown error'));
+    }
+}
+
+// Format receipt for display
+function formatReceipt(receiptData) {
+    const receipt = receiptData;
+    
+    let html = `
+        <div class="receipt">
+            <div class="receipt-header">
+                <h3>🧾 Sales Receipt</h3>
+                <p><strong>Receipt #:</strong> ${receipt.receiptNumber}</p>
+                <p><strong>Date:</strong> ${new Date(receipt.saleDate).toLocaleString()}</p>
+                <p><strong>Store:</strong> ${receipt.storeName}</p>
+                <p><strong>Address:</strong> ${receipt.storeAddress}</p>
+            </div>
+            
+            <div class="receipt-customer">
+                ${receipt.customerName ? `<p><strong>Customer:</strong> ${receipt.customerName}</p>` : ''}
+                ${receipt.customerEmail ? `<p><strong>Email:</strong> ${receipt.customerEmail}</p>` : ''}
+                <p><strong>Payment:</strong> ${receipt.paymentMethod}</p>
+            </div>
+            
+            <div class="receipt-items">
+                <h4>Items:</h4>
+                <table class="receipt-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+    
+    receipt.items.forEach(item => {
+        html += `
+            <tr>
+                <td>${item.itemName}</td>
+                <td>${item.quantity}</td>
+                <td>$${item.unitPrice.toFixed(2)}</td>
+                <td>$${item.lineTotal.toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="receipt-totals">
+                <p><strong>Subtotal:</strong> $${receipt.subtotal.toFixed(2)}</p>
+                <p><strong>Tax:</strong> $${receipt.tax.toFixed(2)}</p>
+                <p class="grand-total"><strong>Grand Total: $${receipt.total.toFixed(2)}</strong></p>
+            </div>
+            
+            <div class="receipt-footer">
+                <p>Thank you for your business!</p>
+                <button class="btn btn-secondary" onclick="printReceipt()">🖨️ Print Receipt</button>
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+// Print receipt
+function printReceipt() {
+    const receiptContent = document.querySelector('.receipt').outerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Receipt</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .receipt { max-width: 400px; margin: 0 auto; }
+                .receipt-header, .receipt-customer, .receipt-footer { text-align: center; margin-bottom: 15px; }
+                .receipt-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                .receipt-table th, .receipt-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                .receipt-table th { background-color: #f5f5f5; }
+                .receipt-totals { text-align: right; margin-top: 15px; }
+                .grand-total { font-size: 1.2em; border-top: 2px solid #000; padding-top: 5px; }
+                @media print { button { display: none; } }
+            </style>
+        </head>
+        <body>
+            ${receiptContent}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+// Get all sales for the current store
+async function getAllSales() {
+    try {
+        const result = await api.makeRequest('/sales', {
+            method: 'GET'
+        });
+        
+        if (result.ok && result.data) {
+            const response = result.data;
+            api.displayResponse('/sales', { method: 'GET' }, result);
+            
+            if (response && Array.isArray(response)) {
+                let html = '<div class="sales-list">';
+                
+                if (response.length === 0) {
+                    html += '<p>No sales found for your store.</p>';
+                } else {
+                    html += '<table class="sales-table"><thead><tr><th>ID</th><th>Date</th><th>Customer</th><th>Payment</th><th>Total</th><th>Actions</th></tr></thead><tbody>';
+                    
+                    response.forEach(sale => {
+                        html += `
+                            <tr>
+                                <td>${sale.id}</td>
+                                <td>${new Date(sale.saleDate).toLocaleDateString()}</td>
+                                <td>${sale.customerName || 'Walk-in'}</td>
+                                <td>${sale.paymentMethod}</td>
+                                <td>$${sale.grandTotal.toFixed(2)}</td>
+                                <td>
+                                    <button class="btn btn-secondary" onclick="generateReceiptForSale(${sale.id})">Receipt</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table>';
+                }
+                
+                html += '</div>';
+                document.getElementById('all-sales').innerHTML = html;
+            }
+        } else {
+            displayError(result.data?.message || 'Failed to retrieve sales');
+        }
+    } catch (error) {
+        console.error('Error getting sales:', error);
+        displayError('Error getting sales: ' + (error.message || 'Unknown error'));
+    }
 }
 
 // Initialize the application
