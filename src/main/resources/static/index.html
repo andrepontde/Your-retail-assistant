@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail Management System - API Tester</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏪 Retail Management System</h1>
+            <div class="auth-status">
+                <span id="auth-status">Not Authenticated</span>
+                <button id="logout-btn" class="btn btn-secondary" style="display: none;">Logout</button>
+            </div>
+        </header>
+
+        <!-- Authentication Section -->
+        <section id="auth-section" class="section">
+            <h2>🔐 Authentication</h2>
+            
+            <!-- Login -->
+            <div class="card">
+                <h3>Login</h3>
+                <div class="form-group">
+                    <input type="text" id="login-username" placeholder="Username" value="testuser">
+                    <input type="password" id="login-password" placeholder="Password" value="password123">
+                    <button class="btn btn-primary" onclick="login()">Login</button>
+                </div>
+            </div>
+
+            <!-- Register -->
+            <div class="card">
+                <h3>Register New User</h3>
+                <div class="form-group">
+                    <input type="text" id="reg-username" placeholder="Username">
+                    <input type="email" id="reg-email" placeholder="Email">
+                    <input type="text" id="reg-firstName" placeholder="First Name">
+                    <input type="text" id="reg-lastName" placeholder="Last Name">
+                    <select id="reg-role">
+                        <option value="STORE_MANAGER">Store Manager</option>
+                        <option value="SALES_ASSOCIATE">Sales Associate</option>
+                        <option value="CORPORATE_ADMIN">Corporate Admin</option>
+                    </select>
+                    <input type="password" id="reg-password" placeholder="Password">
+                    <input type="number" id="reg-storeId" placeholder="Primary Store ID" value="1">
+                    <button class="btn btn-primary" onclick="register()">Register</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Items Section -->
+        <section id="items-section" class="section" style="display: none;">
+            <h2>📦 Items Management</h2>
+            
+            <!-- Create Item -->
+            <div class="card">
+                <h3>Create Item</h3>
+                <div class="form-group">
+                    <input type="text" id="item-name" placeholder="Item Name">
+                    <input type="text" id="item-description" placeholder="Description">
+                    <input type="text" id="item-category" placeholder="Category">
+                    <input type="number" id="item-price" placeholder="Price" step="0.01">
+                    <input type="text" id="item-brand" placeholder="Brand">
+                    <input type="text" id="item-size" placeholder="Size">
+                    <input type="text" id="item-color" placeholder="Color">
+                    <input type="number" id="item-initialQuantity" placeholder="Initial Quantity (optional)">
+                    <button class="btn btn-primary" onclick="createItem()">Create Item</button>
+                </div>
+            </div>
+
+            <!-- Get All Items -->
+            <div class="card">
+                <h3>All Items</h3>
+                <button class="btn btn-secondary" onclick="getAllItems()">Get All Items</button>
+                <div id="items-list" class="results"></div>
+            </div>
+
+            <!-- Get Item by ID -->
+            <div class="card">
+                <h3>Get Item by ID</h3>
+                <div class="form-group">
+                    <input type="number" id="get-item-id" placeholder="Item ID">
+                    <button class="btn btn-secondary" onclick="getItemById()">Get Item</button>
+                </div>
+                <div id="item-detail" class="results"></div>
+            </div>
+
+            <!-- Get Items by Category -->
+            <div class="card">
+                <h3>Get Items by Category</h3>
+                <div class="form-group">
+                    <input type="text" id="get-category" placeholder="Category">
+                    <button class="btn btn-secondary" onclick="getItemsByCategory()">Get Items</button>
+                </div>
+                <div id="category-items" class="results"></div>
+            </div>
+
+            <!-- Get Items by Name -->
+            <div class="card">
+                <h3>Get Items by Name</h3>
+                <div class="form-group">
+                    <input type="text" id="get-name" placeholder="Item Name">
+                    <button class="btn btn-secondary" onclick="getItemsByName()">Get Items</button>
+                </div>
+                <div id="name-items" class="results"></div>
+            </div>
+        </section>
+
+        <!-- Inventory Section -->
+        <section id="inventory-section" class="section" style="display: none;">
+            <h2>📊 Inventory Management</h2>
+            
+            <!-- Add Stock -->
+            <div class="card">
+                <h3>Add Stock to Current Store</h3>
+                <div class="form-group">
+                    <input type="number" id="add-item-id" placeholder="Item ID">
+                    <input type="number" id="add-quantity" placeholder="Quantity to Add">
+                    <button class="btn btn-primary" onclick="addStock()">Add Stock</button>
+                </div>
+            </div>
+
+            <!-- Remove Stock -->
+            <div class="card">
+                <h3>Remove Stock from Current Store</h3>
+                <div class="form-group">
+                    <input type="number" id="remove-item-id" placeholder="Item ID">
+                    <input type="number" id="remove-quantity" placeholder="Quantity to Remove">
+                    <button class="btn btn-warning" onclick="removeStock()">Remove Stock</button>
+                </div>
+            </div>
+
+            <!-- Check Stock -->
+            <div class="card">
+                <h3>Check Stock Level</h3>
+                <div class="form-group">
+                    <input type="number" id="check-item-id" placeholder="Item ID">
+                    <button class="btn btn-secondary" onclick="checkStock()">Check Stock</button>
+                </div>
+                <div id="stock-level" class="results"></div>
+            </div>
+
+            <!-- My Store Inventory -->
+            <div class="card">
+                <h3>My Store Inventory</h3>
+                <button class="btn btn-secondary" onclick="getMyStoreInventory()">Get My Store Inventory</button>
+                <div id="my-inventory" class="results"></div>
+            </div>
+
+            <!-- Low Stock Items -->
+            <div class="card">
+                <h3>Low Stock Items</h3>
+                <button class="btn btn-warning" onclick="getLowStockItems()">Get Low Stock Items</button>
+                <div id="low-stock" class="results"></div>
+            </div>
+
+            <!-- Reserve Stock -->
+            <div class="card">
+                <h3>Reserve Stock</h3>
+                <div class="form-group">
+                    <input type="number" id="reserve-item-id" placeholder="Item ID">
+                    <input type="number" id="reserve-quantity" placeholder="Quantity to Reserve">
+                    <button class="btn btn-primary" onclick="reserveStock()">Reserve Stock</button>
+                </div>
+            </div>
+
+            <!-- Transfer Stock -->
+            <div class="card">
+                <h3>Transfer Stock to Another Store</h3>
+                <div class="form-group">
+                    <input type="number" id="transfer-item-id" placeholder="Item ID">
+                    <input type="number" id="transfer-quantity" placeholder="Quantity">
+                    <input type="number" id="transfer-to-store" placeholder="To Store ID" value="2">
+                    <button class="btn btn-primary" onclick="transferStock()">Transfer Stock</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sales Section -->
+        <section id="sales-section" class="section" style="display: none;">
+            <h2>💰 Sales Management</h2>
+            
+            <!-- Create Sale -->
+            <div class="card">
+                <h3>Create New Sale</h3>
+                <div class="form-group">
+                    <input type="email" id="customer-email" placeholder="Customer Email (optional)">
+                    <input type="tel" id="customer-phone" placeholder="Customer Phone (optional)">
+                </div>
+                <div class="form-group">
+                    <select id="payment-method">
+                        <option value="CASH">Cash</option>
+                        <option value="CARD">Card</option>
+                        <option value="MOBILE_PAYMENT">Mobile Payment</option>
+                        <option value="BANK_TRANSFER">Bank Transfer</option>
+                    </select>
+                </div>
+                
+                <!-- Sale Items -->
+                <div class="sale-items">
+                    <h4>Sale Items</h4>
+                    <div id="sale-items-container">
+                        <div class="sale-item-row">
+                            <input type="number" class="item-id" placeholder="Item ID">
+                            <input type="number" class="item-quantity" placeholder="Quantity" min="1" value="1">
+                            <button type="button" class="btn btn-secondary" onclick="addSaleItemRow()">+</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="createSale()">Create Sale</button>
+                <div id="sale-result" class="results"></div>
+            </div>
+
+            <!-- Generate Receipt -->
+            <div class="card">
+                <h3>Generate Receipt</h3>
+                <div class="form-group">
+                    <input type="number" id="receipt-sale-id" placeholder="Sale ID">
+                    <button class="btn btn-secondary" onclick="generateReceipt()">Generate Receipt</button>
+                </div>
+                <div id="receipt-display" class="receipt-container"></div>
+            </div>
+
+            <!-- Get All Sales -->
+            <div class="card">
+                <h3>My Store Sales</h3>
+                <button class="btn btn-secondary" onclick="getAllSales()">Get All Sales</button>
+                <div id="all-sales" class="results"></div>
+            </div>
+        </section>
+
+        <!-- Response Section -->
+        <section class="section">
+            <h2>📋 API Response</h2>
+            <div class="card">
+                <pre id="response-output">API responses will appear here...</pre>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js?v=20250804-6"></script>
+</body>
+</html>
