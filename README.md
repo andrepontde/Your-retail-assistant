@@ -1,8 +1,29 @@
 # 🏪 Retail Management System
 
-A comprehensive, enterprise-grade retail management system built with Spring Boot that helps businesses streamline their inventory, sales, and user management operations. This system provides a complete solution for managing multiple store locations with role-based access control and real-time inventory tracking.
+A comprehensive, enterprise-grade retail management system built with Spring Boot that helps businesses streamline their inventory, sales, and user management operations. Features professional SKU/UPC management, receipt generation, and multi-store support with role-based access control.
 
-## 🚀 Features
+## 🚀 Key Features
+
+### � **Professional SKU & UPC Management**
+- **Industry-standard SKU format**: `[CATEGORY]-[BRAND]-[VARIANT]-[SEQUENCE]` (e.g., `ELE-SAM-32GB-001`)
+- **12-digit UPC barcode generation** for retail scanning compatibility
+- **Automatic SKU/UPC generation** with uniqueness validation
+- **SKU-based inventory operations** for user-friendly management
+- **Dual-mode system**: Technical operations use database IDs, business operations use SKUs
+
+### 🧾 **Sales & Receipt System**
+- **Professional receipt generation** with company branding
+- **Complete sales transaction processing** with automatic inventory updates
+- **Multiple payment methods** (Cash, Card, Digital Wallet)
+- **Sales history and reporting** with date range filtering
+- **Refund processing** with inventory adjustments
+
+### 📦 **Advanced Inventory Management**
+- **Real-time stock tracking** across multiple store locations
+- **SKU-based stock operations** (add/remove/check by SKU)
+- **Low stock alerts** with customizable thresholds
+- **Stock transfer** between stores
+- **Stock reservation** for pending sales
 
 ### 🔐 **Authentication & Authorization**
 - **JWT-based authentication** with secure token management
@@ -10,45 +31,19 @@ A comprehensive, enterprise-grade retail management system built with Spring Boo
 - **User registration and management** with store assignments
 - **Secure password encryption** using BCrypt
 
-### 📦 **Inventory Management**
-- **Real-time stock tracking** across multiple store locations
-- **Low stock alerts** with customizable thresholds
-- **Stock transfer** between stores
-- **Stock reservation** for pending sales
-- **Automatic inventory updates** during sales transactions
-
-### 🛍️ **Sales Processing**
-- **Complete sales transaction processing** with item tracking
-- **Sales history and analytics** with date range filtering
-- **Revenue reporting** and transaction summaries
-- **Refund and return processing** with inventory adjustments
-- **Customer information management**
-
 ### 🏢 **Multi-Store Support**
 - **Multiple store locations** with centralized management
 - **Store-specific inventory tracking**
 - **Cross-store operations** for managers and admins
-- **Store performance analytics**
-
-### 👥 **User Management**
-- **Employee management** with role assignments
-- **Store-specific user access**
-- **User activity tracking**
-- **Flexible permission system**
+- **User-context-aware operations** (automatic store detection)
 
 ### 🎨 **Modern Web Interface**
-- **Interactive API testing interface** built with vanilla JavaScript
+- **Interactive API testing interface** with SKU management
+- **Professional SKU generation** with real-time preview
 - **Responsive design** that works on all devices
-- **Real-time feedback** and error handling
-- **Clean, professional UI** with modern styling
+- **User-friendly inventory management** with SKU-based operations
 
-### � **Mobile App Ready**
-- **CORS-enabled API** for cross-origin requests
-- **Public discovery endpoints** for server information
-- **Network-accessible deployment** for mobile testing
-- **RESTful API design** optimized for mobile consumption
-
-## �🛠️ Technology Stack
+## 🛠️ Technology Stack
 
 - **Backend:** Spring Boot 3.5.3, Java 21
 - **Database:** PostgreSQL with JPA/Hibernate
@@ -118,19 +113,32 @@ jwt.expiration=86400
 
 ## 📚 API Documentation
 
-### Public Endpoints (No Authentication Required)
+### SKU & UPC Management
 
-#### Server Information
+#### Generate SKU/UPC Pair
 ```http
-GET /api/public/server-info
-```
-Returns server capabilities and version information for mobile app discovery.
+POST /api/items/generate-sku
+Authorization: Bearer {jwt-token}
+Content-Type: application/json
 
-#### Health Check
-```http
-GET /api/public/health
+{
+  "category": "Electronics",
+  "brand": "Samsung",
+  "variant": "32GB"
+}
 ```
-Returns server health status and timestamp.
+
+#### Find Item by SKU
+```http
+GET /api/items/by-sku/{sku}
+Authorization: Bearer {jwt-token}
+```
+
+#### Find Item by UPC
+```http
+GET /api/items/by-upc/{upc}
+Authorization: Bearer {jwt-token}
+```
 
 ### Authentication Endpoints
 
@@ -163,50 +171,45 @@ Content-Type: application/json
 
 ### Item Management
 
-#### Create Item
+#### Create Item with Auto-Generated SKU/UPC
 ```http
 POST /api/items
 Authorization: Bearer {jwt-token}
 Content-Type: application/json
 
 {
-  "name": "Product Name",
-  "description": "Product Description",
+  "name": "Samsung Galaxy Phone",
+  "description": "32GB Smartphone",
   "category": "Electronics",
-  "price": 29.99,
-  "sku": "PROD-001"
+  "brand": "Samsung",
+  "variant": "32GB",
+  "price": 599.99
 }
 ```
 
-#### Get All Items
-```http
-GET /api/items
-Authorization: Bearer {jwt-token}
-```
+### SKU-Based Inventory Management
 
-### Inventory Management
-
-#### Add Stock
+#### Add Stock by SKU
 ```http
-POST /api/inventory/add-stock
+POST /api/inventory/add-stock-by-sku
 Authorization: Bearer {jwt-token}
 Content-Type: application/json
 
 {
-  "itemId": 123,
+  "sku": "ELE-SAM-32GB-001",
   "quantity": 50
 }
 ```
 
-#### Check Stock Level
+#### Check Stock by SKU
 ```http
-GET /api/inventory/stock/{itemId}
+GET /api/inventory/stock-by-sku/{sku}
 Authorization: Bearer {jwt-token}
 ```
 
-### Sales Management
+### Sales & Receipt Generation
 
-#### Process Sale
+#### Process Sale with Receipt
 ```http
 POST /api/sales
 Authorization: Bearer {jwt-token}
@@ -215,11 +218,13 @@ Content-Type: application/json
 {
   "customerName": "John Customer",
   "customerEmail": "customer@example.com",
+  "customerPhone": "+1234567890",
+  "paymentMethod": "CARD",
   "items": [
     {
-      "itemId": 123,
+      "itemId": 1,
       "quantity": 2,
-      "unitPrice": 29.99
+      "unitPrice": 599.99
     }
   ]
 }
@@ -232,45 +237,45 @@ src/
 ├── main/
 │   ├── java/dev/andrepontde/retailmanager/retail_system/
 │   │   ├── controller/          # REST API controllers
-│   │   ├── service/             # Business logic layer
+│   │   ├── service/             # Business logic layer (including SKUService)
 │   │   ├── repository/          # Data access layer
-│   │   ├── entity/              # JPA entities
+│   │   ├── entity/              # JPA entities with SKU/UPC fields
 │   │   ├── dto/                 # Data transfer objects
 │   │   └── security/            # Security configuration
 │   └── resources/
-│       ├── static/              # Web interface files
+│       ├── static/              # Web interface with SKU management
 │       └── application.properties
 └── test/                        # Unit and integration tests
 ```
+
+## 🎯 Usage Examples
+
+### Creating Items with SKU/UPC
+1. **Navigate to** `http://localhost:8080`
+2. **Login** with test credentials
+3. **Fill in item details** (name, category, brand, variant, price)
+4. **Click "Generate SKU"** to auto-create SKU and UPC
+5. **Submit** to create item with professional identifiers
+
+### SKU-Based Inventory Management
+1. **Use the "SKU-Based Inventory" section**
+2. **Add stock** using SKU: `ELE-SAM-32GB-001`
+3. **Check stock levels** by SKU instead of database ID
+4. **Professional workflow** for retail staff
+
+### Receipt Generation
+1. **Process a sale** through the sales interface
+2. **Automatic receipt generation** with company branding
+3. **Receipt shows SKUs** for easy reference
+4. **Professional transaction records**
 
 ## 🔒 Security Features
 
 - **JWT Authentication:** Stateless authentication with secure token generation
 - **Role-Based Access:** Three-tier permission system (Admin, Manager, Associate)
 - **Password Encryption:** BCrypt hashing for secure password storage
-- **CORS Support:** Configured for mobile app and cross-origin requests
 - **SQL Injection Prevention:** JPA/Hibernate parameterized queries
-
-## 📱 Mobile App Development
-
-### API Features for Mobile
-- **CORS-enabled endpoints** for cross-platform access
-- **Public discovery API** at `/api/public/server-info`
-- **Health monitoring** at `/api/public/health`
-- **JWT-based authentication** perfect for mobile apps
-- **RESTful design** with JSON responses
-
-### Network Access Setup
-1. **Start the application** with `docker-compose up --build`
-2. **Find your computer's IP** (e.g., `ipconfig` on Windows)
-3. **Configure firewall** to allow port 8080
-4. **Access from mobile** via `http://your-ip:8080`
-
-### Mobile App Architecture
-The system supports both:
-- **Official hosted server** deployment
-- **Local server instances** for development/testing
-- **Multi-server switching** in mobile apps
+- **User-context operations:** Automatic store detection for security
 
 ## 🧪 Testing
 
@@ -280,10 +285,11 @@ The system supports both:
 ```
 
 ### API Testing
-The application includes a built-in web interface for testing all API endpoints. Simply navigate to `http://localhost:8080` and use the interactive forms to test functionality.
-
-### Mobile Testing
-Test API endpoints from mobile devices using the network IP address (e.g., `http://192.168.1.100:8080/api/public/health`).
+The application includes a built-in web interface for testing all API endpoints. Navigate to `http://localhost:8080` and use the interactive forms to test:
+- **SKU generation and management**
+- **Inventory operations by SKU**
+- **Receipt generation**
+- **All retail management functions**
 
 ## 🚀 Deployment
 
@@ -297,88 +303,28 @@ docker-compose up --build -d
 
 # Stop services
 docker-compose down
+
+# Clean restart (removes data)
+docker-compose down -v && docker-compose up --build
 ```
 
-### Traditional Deployment
-```bash
-# Build the application
-./mvnw clean package
-
-# Build Docker image
-docker build -t retail-management-system .
-
-# Run with Docker Compose
-docker-compose up --build
-```
-
-### Production Considerations
-- Update JWT secret key in production
-- Configure proper database credentials
-- Set up SSL/TLS certificates
-- Configure logging levels
-- Set up monitoring and health checks
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-1. **Fork the repository**
-2. **Create a feature branch** (`git checkout -b feature/amazing-feature`)
-3. **Make your changes** with proper tests
-4. **Commit your changes** (`git commit -m 'Add amazing feature'`)
-5. **Push to the branch** (`git push origin feature/amazing-feature`)
-6. **Open a Pull Request**
-
-### Development Guidelines
-- Follow Java coding conventions
-- Write unit tests for new features
-- Update documentation for API changes
-- Use meaningful commit messages
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👨‍💻 Author
-
-**Andre Pont** - *Initial work* - [andrepontde](https://github.com/andrepontde)
-
-## 🆘 Support
-
-If you encounter any issues or have questions:
-
-1. **Check the documentation** above
-2. **Search existing issues** on GitHub
-3. **Create a new issue** with detailed information
-4. **Contact the maintainer** for urgent matters
-
-## 🎯 Roadmap
+## 🎯 Current Features & Roadmap
 
 ### ✅ Recently Added
-- **CORS support** for mobile app development
-- **Public API endpoints** for server discovery
-- **Complete Docker deployment** with single command
-- **Network access configuration** for mobile testing
-- **Java 21 compatibility** and optimized build process
+- **Professional SKU/UPC management** with industry-standard format
+- **Receipt generation system** with company branding
+- **SKU-based inventory operations** for user-friendly management
+- **Dual-mode system** (technical IDs + business SKUs)
+- **Complete sales transaction processing** with automatic inventory updates
 
-### Upcoming Features
-- **Native mobile applications** (React Native/Flutter)
-- **Advanced analytics dashboard** with charts and graphs
-- **Barcode scanning support** for inventory management
-- **Email notifications** for low stock and sales
-- **Advanced reporting** with PDF generation
-- **Integration with payment gateways**
-- **Multi-tenant support** for SaaS deployment
-
-### Performance Improvements
-- **Redis caching layer** implementation
-- **Database indexing optimization**
-- **API rate limiting** and throttling
-- **Batch processing** for large operations
-- **Microservices architecture** for scale
+### 🔄 System Architecture
+- **Database IDs:** Used internally for performance and referential integrity
+- **SKUs:** User-facing business identifiers for daily operations
+- **UPCs:** Barcode-compatible for retail scanning
+- **Best of both worlds:** Technical efficiency + business usability
 
 ---
 
-**Built with ❤️ using Spring Boot and modern web technologies**
+**Built with ❤️ using Spring Boot and modern retail management practices**
 
-*This system is designed to be scalable, maintainable, and user-friendly. Whether you're managing a single store or a chain of retail locations, this solution provides the tools you need to succeed.*
+*This system provides professional retail management capabilities with industry-standard SKU/UPC support, receipt generation, and comprehensive inventory management. Perfect for single stores or multi-location retail chains.*
