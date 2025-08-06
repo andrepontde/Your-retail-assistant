@@ -65,8 +65,8 @@ Before you can run this application, make sure you have the following installed:
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/andrepontde/Your-retail-assistant.git
-cd Your-retail-assistant
+git clone https://github.com/andrepontde/Arka-Inventory.git
+cd Arka-Inventory
 ```
 
 ### 2. Start the Complete System
