@@ -570,3 +570,46 @@ input:focus, select:focus {
         padding: 8px 4px;
     }
 }
+
+/* SKU-specific styling */
+.sku-card {
+    border-left: 4px solid #2563eb;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.sku-card h3 {
+    color: #1e40af;
+    margin-bottom: 10px;
+}
+
+.sku-card h4 {
+    color: #374151;
+    font-size: 1.1em;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #d1d5db;
+    padding-bottom: 5px;
+}
+
+.sku-preview {
+    background: #f3f4f6;
+    padding: 8px;
+    border-radius: 4px;
+    border-left: 3px solid #2563eb;
+    font-family: 'Courier New', monospace;
+}
+
+/* Enhanced item display for SKU visibility */
+.item-card .detail-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.detail-value {
+    color: #1f2937;
+}

@@ -60,14 +60,24 @@
                 <div class="form-group">
                     <input type="text" id="item-name" placeholder="Item Name">
                     <input type="text" id="item-description" placeholder="Description">
-                    <input type="text" id="item-category" placeholder="Category">
+                    <input type="text" id="item-category" placeholder="Category" onchange="updateSKUPreview()">
                     <input type="number" id="item-price" placeholder="Price" step="0.01">
-                    <input type="text" id="item-brand" placeholder="Brand">
-                    <input type="text" id="item-size" placeholder="Size">
-                    <input type="text" id="item-color" placeholder="Color">
+                    <input type="text" id="item-brand" placeholder="Brand" onchange="updateSKUPreview()">
+                    <input type="text" id="item-variant" placeholder="Variant (Size/Color/Model)" onchange="updateSKUPreview()">
                     <input type="number" id="item-initialQuantity" placeholder="Initial Quantity (optional)">
-                    <button class="btn btn-primary" onclick="createItem()">Create Item</button>
                 </div>
+                
+                <!-- SKU Generation Section -->
+                <div class="form-group">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="item-sku" placeholder="SKU (auto-generated)" readonly>
+                        <button type="button" class="btn btn-secondary" onclick="generateSKUForItem()">🔄 Generate SKU</button>
+                    </div>
+                    <input type="text" id="item-upc" placeholder="UPC (auto-generated)" readonly>
+                    <div id="sku-preview" class="sku-preview" style="margin-top: 5px; font-size: 0.9em; color: #666;"></div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="createItem()">Create Item</button>
             </div>
 
             <!-- Get All Items -->
@@ -105,6 +115,26 @@
                     <button class="btn btn-secondary" onclick="getItemsByName()">Get Items</button>
                 </div>
                 <div id="name-items" class="results"></div>
+            </div>
+
+            <!-- Get Item by SKU -->
+            <div class="card">
+                <h3>Get Item by SKU</h3>
+                <div class="form-group">
+                    <input type="text" id="get-sku" placeholder="SKU (e.g., ELE-SAM-32GB-001)">
+                    <button class="btn btn-secondary" onclick="getItemBySKU()">Get Item</button>
+                </div>
+                <div id="sku-items" class="results"></div>
+            </div>
+
+            <!-- Get Item by UPC -->
+            <div class="card">
+                <h3>Get Item by UPC</h3>
+                <div class="form-group">
+                    <input type="text" id="get-upc" placeholder="UPC Barcode">
+                    <button class="btn btn-secondary" onclick="getItemByUPC()">Get Item</button>
+                </div>
+                <div id="upc-items" class="results"></div>
             </div>
         </section>
 
@@ -176,6 +206,44 @@
                     <button class="btn btn-primary" onclick="transferStock()">Transfer Stock</button>
                 </div>
             </div>
+
+            <!-- SKU-Based Inventory Management -->
+            <div class="card sku-card">
+                <h3>📋 SKU-Based Inventory (User-Friendly)</h3>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">
+                    Use SKUs instead of numeric IDs for easier inventory management
+                </p>
+                
+                <!-- Add Stock by SKU -->
+                <div style="margin-bottom: 20px;">
+                    <h4>Add Stock by SKU</h4>
+                    <div class="form-group">
+                        <input type="text" id="add-sku" placeholder="SKU (e.g., ELE-SAM-32GB-001)">
+                        <input type="number" id="add-sku-quantity" placeholder="Quantity to Add">
+                        <button class="btn btn-primary" onclick="addStockBySKU()">Add Stock</button>
+                    </div>
+                </div>
+
+                <!-- Remove Stock by SKU -->
+                <div style="margin-bottom: 20px;">
+                    <h4>Remove Stock by SKU</h4>
+                    <div class="form-group">
+                        <input type="text" id="remove-sku" placeholder="SKU (e.g., ELE-SAM-32GB-001)">
+                        <input type="number" id="remove-sku-quantity" placeholder="Quantity to Remove">
+                        <button class="btn btn-warning" onclick="removeStockBySKU()">Remove Stock</button>
+                    </div>
+                </div>
+
+                <!-- Check Stock by SKU -->
+                <div style="margin-bottom: 20px;">
+                    <h4>Check Stock by SKU</h4>
+                    <div class="form-group">
+                        <input type="text" id="check-sku" placeholder="SKU (e.g., ELE-SAM-32GB-001)">
+                        <button class="btn btn-secondary" onclick="checkStockBySKU()">Check Stock</button>
+                    </div>
+                    <div id="sku-stock-level" class="results"></div>
+                </div>
+            </div>
         </section>
 
         <!-- Sales Section -->
@@ -241,6 +309,6 @@
         </section>
     </div>
 
-    <script src="script.js?v=20250804-6"></script>
+    <script src="script.js?v=20250804-7"></script>
 </body>
 </html>

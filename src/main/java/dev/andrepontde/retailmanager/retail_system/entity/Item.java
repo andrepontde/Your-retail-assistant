@@ -1,5 +1,6 @@
 package dev.andrepontde.retailmanager.retail_system.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -25,12 +26,36 @@ public class Item {
     @Min(value = 0, message = "Price must be at least 0")
     private Double price;
 
+    @Column(unique = true, length = 50)
+    private String sku;
+
+    @Column(length = 20)
+    private String upc;
+
+    @Column(length = 100)
+    private String brand;
+
+    @Column(length = 50)
+    private String variant;
+
+    @Column(length = 500)
+    private String description;
+
     public Item(){}
 
     public Item(String name, String category, Double price) {
         this.name = name;
         this.category = category;
         this.price = price;
+    }
+
+    public Item(String name, String category, Double price, String brand, String variant, String description) {
+        this.name = name;
+        this.category = category;
+        this.price = price;
+        this.brand = brand;
+        this.variant = variant;
+        this.description = description;
     }
 
     public Long getId() {
@@ -63,6 +88,46 @@ public class Item {
 
     public void setPrice(Double price) {
         this.price = price;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public String getUpc() {
+        return upc;
+    }
+
+    public void setUpc(String upc) {
+        this.upc = upc;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public String getVariant() {
+        return variant;
+    }
+
+    public void setVariant(String variant) {
+        this.variant = variant;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
 }   

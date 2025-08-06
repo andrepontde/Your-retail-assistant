@@ -1,6 +1,7 @@
 package dev.andrepontde.retailmanager.retail_system.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +31,49 @@ public class ItemService {
     
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private SKUService skuService;
 
     // Create or update a item
     @Transactional
     public ItemDTO saveItem(ItemDTO itemDTO) {
         Item item = toEntity(itemDTO);
+        
+        // Auto-generate SKU if not provided
+        if (item.getSku() == null || item.getSku().trim().isEmpty()) {
+            try {
+                String category = item.getCategory() != null ? item.getCategory() : "General";
+                String brand = item.getBrand() != null ? item.getBrand() : "Generic";
+                String generatedSku = skuService.generateSKU(category, brand, item.getVariant());
+                
+                // Ensure uniqueness
+                while (skuService.skuExists(generatedSku)) {
+                    generatedSku = skuService.generateSKU(category, brand, item.getVariant());
+                }
+                item.setSku(generatedSku);
+            } catch (Exception e) {
+                // If SKU generation fails, create a simple fallback SKU
+                item.setSku("GEN-GEN-" + System.currentTimeMillis() % 1000);
+                System.err.println("Failed to generate SKU, using fallback: " + e.getMessage());
+            }
+        }
+        
+        // Auto-generate UPC if not provided
+        if (item.getUpc() == null || item.getUpc().trim().isEmpty()) {
+            try {
+                String generatedUpc = skuService.generateUPC();
+                // Ensure uniqueness
+                while (skuService.upcExists(generatedUpc)) {
+                    generatedUpc = skuService.generateUPC();
+                }
+                item.setUpc(generatedUpc);
+            } catch (Exception e) {
+                // If UPC generation fails, continue without UPC
+                System.err.println("Failed to generate UPC: " + e.getMessage());
+            }
+        }
+        
         item = itemRepository.save(item);
         
         // If this is a new item (no ID provided) and initialQuantity is specified,
@@ -97,16 +136,28 @@ public class ItemService {
                 item.getPrice()
         );
         dto.setId(item.getId());
+        dto.setSku(item.getSku());
+        dto.setUpc(item.getUpc());
+        dto.setBrand(item.getBrand());
+        dto.setVariant(item.getVariant());
+        dto.setDescription(item.getDescription());
         return dto;
     }
 
     // Convert DTO to Entity
     private Item toEntity(ItemDTO itemDTO) {
-        return new Item(
+        Item item = new Item(
                 itemDTO.getName(),
                 itemDTO.getCategory(),
                 itemDTO.getPrice()
         );
+        item.setId(itemDTO.getId());
+        item.setSku(itemDTO.getSku());
+        item.setUpc(itemDTO.getUpc());
+        item.setBrand(itemDTO.getBrand());
+        item.setVariant(itemDTO.getVariant());
+        item.setDescription(itemDTO.getDescription());
+        return item;
     }
     
     /**
@@ -133,5 +184,25 @@ public class ItemService {
             // silently skip inventory creation
             // This allows the system to work in different contexts
         }
+    }
+
+    // ========================================
+    // SKU AND BARCODE RELATED METHODS
+    // ========================================
+
+    /**
+     * Find item by SKU
+     */
+    public Optional<ItemDTO> getItemBySKU(String sku) {
+        return itemRepository.findBySku(sku)
+                .map(this::toDTO);
+    }
+
+    /**
+     * Find item by UPC
+     */
+    public Optional<ItemDTO> getItemByUPC(String upc) {
+        return itemRepository.findByUpc(upc)
+                .map(this::toDTO);
     }
 }

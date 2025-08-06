@@ -35,6 +35,12 @@ public class ItemDTO {
     @Min(value = 0, message = "Initial quantity must be at least 0")
     private Integer initialQuantity; // Optional: if provided, creates inventory record with this quantity
 
+    private String sku; // Stock Keeping Unit
+    private String upc; // Universal Product Code
+    private String brand;
+    private String variant; // Size, color, model, etc.
+    private String description;
+
     // Note: stockQuantity removed - stock is managed per store via InventoryDTO
 
     public ItemDTO(){}
@@ -83,6 +89,46 @@ public class ItemDTO {
 
     public void setInitialQuantity(Integer initialQuantity) {
         this.initialQuantity = initialQuantity;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public String getUpc() {
+        return upc;
+    }
+
+    public void setUpc(String upc) {
+        this.upc = upc;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public String getVariant() {
+        return variant;
+    }
+
+    public void setVariant(String variant) {
+        this.variant = variant;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     // stockQuantity getter/setter removed - use InventoryDTO for stock information

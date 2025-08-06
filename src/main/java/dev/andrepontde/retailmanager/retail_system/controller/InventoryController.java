@@ -209,4 +209,81 @@ public class InventoryController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // ================================
+    // SKU-BASED INVENTORY OPERATIONS
+    // ================================
+
+    /**
+     * Add stock by SKU to current user's store.
+     * 
+     * POST /api/inventory/add-stock-by-sku
+     * {
+     *   "sku": "ELE-SAM-32GB-001",
+     *   "quantity": 50
+     * }
+     */
+    @PostMapping("/add-stock-by-sku")
+    public ResponseEntity<InventoryDTO> addStockBySKU(@RequestBody Map<String, Object> request) {
+        try {
+            String sku = (String) request.get("sku");
+            Integer quantity = (Integer) request.get("quantity");
+            
+            if (sku == null || quantity == null || quantity <= 0) {
+                return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            }
+            
+            InventoryDTO inventory = inventoryService.addStockBySKU(sku, quantity);
+            return new ResponseEntity<>(inventory, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Remove stock by SKU from current user's store.
+     * 
+     * POST /api/inventory/remove-stock-by-sku
+     * {
+     *   "sku": "ELE-SAM-32GB-001",
+     *   "quantity": 10
+     * }
+     */
+    @PostMapping("/remove-stock-by-sku")
+    public ResponseEntity<InventoryDTO> removeStockBySKU(@RequestBody Map<String, Object> request) {
+        try {
+            String sku = (String) request.get("sku");
+            Integer quantity = (Integer) request.get("quantity");
+            
+            if (sku == null || quantity == null || quantity <= 0) {
+                return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            }
+            
+            InventoryDTO inventory = inventoryService.removeStockBySKU(sku, quantity);
+            return new ResponseEntity<>(inventory, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Get stock level by SKU for current user's store.
+     * 
+     * GET /api/inventory/stock-by-sku/ELE-SAM-32GB-001
+     */
+    @GetMapping("/stock-by-sku/{sku}")
+    public ResponseEntity<InventoryDTO> getStockBySKU(@PathVariable String sku) {
+        try {
+            InventoryDTO inventory = inventoryService.getStockBySKU(sku);
+            return new ResponseEntity<>(inventory, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

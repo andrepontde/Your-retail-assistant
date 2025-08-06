@@ -194,6 +194,22 @@ ${'='.repeat(80)}
         return await this.makeRequest(`/items/name/${name}`);
     }
 
+    // SKU-based item lookups
+    async getItemBySKU(sku) {
+        return await this.makeRequest(`/items/by-sku/${sku}`);
+    }
+
+    async getItemByUPC(upc) {
+        return await this.makeRequest(`/items/by-upc/${upc}`);
+    }
+
+    async generateSKU(category, brand, variant) {
+        return await this.makeRequest('/items/generate-sku', {
+            method: 'POST',
+            body: JSON.stringify({ category, brand, variant })
+        });
+    }
+
     // Inventory methods
     async addStock(itemId, quantity) {
         return await this.makeRequest('/inventory/add-stock', {
@@ -211,6 +227,25 @@ ${'='.repeat(80)}
 
     async getStockLevel(itemId) {
         return await this.makeRequest(`/inventory/stock/${itemId}`);
+    }
+
+    // SKU-based inventory methods
+    async addStockBySKU(sku, quantity) {
+        return await this.makeRequest('/inventory/add-stock-by-sku', {
+            method: 'POST',
+            body: JSON.stringify({ sku, quantity })
+        });
+    }
+
+    async removeStockBySKU(sku, quantity) {
+        return await this.makeRequest('/inventory/remove-stock-by-sku', {
+            method: 'POST',
+            body: JSON.stringify({ sku, quantity })
+        });
+    }
+
+    async getStockBySKU(sku) {
+        return await this.makeRequest(`/inventory/stock-by-sku/${sku}`);
     }
 
     async getMyStoreInventory() {
@@ -288,8 +323,9 @@ async function createItem() {
         category: document.getElementById('item-category').value,
         price: parseFloat(document.getElementById('item-price').value),
         brand: document.getElementById('item-brand').value,
-        size: document.getElementById('item-size').value,
-        color: document.getElementById('item-color').value
+        variant: document.getElementById('item-variant').value,
+        sku: document.getElementById('item-sku').value,
+        upc: document.getElementById('item-upc').value
     };
 
     const initialQuantity = document.getElementById('item-initialQuantity').value;
@@ -300,6 +336,15 @@ async function createItem() {
     if (!itemData.name || !itemData.category || !itemData.price) {
         api.showMessage('Please fill in required fields (name, category, price)', 'error');
         return;
+    }
+
+    // Auto-generate SKU if not provided
+    if (!itemData.sku && itemData.category && itemData.brand) {
+        const skuResult = await generateSKUForItem();
+        if (skuResult) {
+            itemData.sku = document.getElementById('item-sku').value;
+            itemData.upc = document.getElementById('item-upc').value;
+        }
     }
 
     await api.createItem(itemData);
@@ -348,6 +393,32 @@ async function getItemsByName() {
     const result = await api.getItemsByName(name);
     if (result.ok) {
         displayItems(result.data, 'name-items');
+    }
+}
+
+async function getItemBySKU() {
+    const sku = document.getElementById('get-sku').value;
+    if (!sku) {
+        api.showMessage('Please enter a SKU', 'error');
+        return;
+    }
+    
+    const result = await api.getItemBySKU(sku);
+    if (result.ok) {
+        displayItems([result.data], 'sku-items');
+    }
+}
+
+async function getItemByUPC() {
+    const upc = document.getElementById('get-upc').value;
+    if (!upc) {
+        api.showMessage('Please enter a UPC', 'error');
+        return;
+    }
+    
+    const result = await api.getItemByUPC(upc);
+    if (result.ok) {
+        displayItems([result.data], 'upc-items');
     }
 }
 
@@ -428,6 +499,44 @@ async function transferStock() {
     await api.transferStock(itemId, quantity, toStoreId);
 }
 
+// SKU-based inventory functions
+async function addStockBySKU() {
+    const sku = document.getElementById('add-sku').value;
+    const quantity = parseInt(document.getElementById('add-sku-quantity').value);
+    
+    if (!sku || !quantity) {
+        api.showMessage('Please enter both SKU and quantity', 'error');
+        return;
+    }
+    
+    await api.addStockBySKU(sku, quantity);
+}
+
+async function removeStockBySKU() {
+    const sku = document.getElementById('remove-sku').value;
+    const quantity = parseInt(document.getElementById('remove-sku-quantity').value);
+    
+    if (!sku || !quantity) {
+        api.showMessage('Please enter both SKU and quantity', 'error');
+        return;
+    }
+    
+    await api.removeStockBySKU(sku, quantity);
+}
+
+async function checkStockBySKU() {
+    const sku = document.getElementById('check-sku').value;
+    if (!sku) {
+        api.showMessage('Please enter a SKU', 'error');
+        return;
+    }
+    
+    const result = await api.getStockBySKU(sku);
+    if (result.ok) {
+        displayInventory([result.data], 'sku-stock-level');
+    }
+}
+
 // Display functions
 function displayItems(items, containerId) {
     const container = document.getElementById(containerId);
@@ -453,10 +562,16 @@ function displayItems(items, containerId) {
                 <span class="item-price">$${item.price ? item.price.toFixed(2) : 'N/A'}</span>
             </div>
             <div class="item-details">
+                ${item.sku ? `
                 <div class="detail-item">
-                    <span class="detail-label">ID:</span>
-                    <span class="detail-value">${item.id}</span>
-                </div>
+                    <span class="detail-label">SKU:</span>
+                    <span class="detail-value" style="font-weight: bold; color: #2563eb;">${item.sku}</span>
+                </div>` : ''}
+                ${item.upc ? `
+                <div class="detail-item">
+                    <span class="detail-label">UPC:</span>
+                    <span class="detail-value">${item.upc}</span>
+                </div>` : ''}
                 <div class="detail-item">
                     <span class="detail-label">Category:</span>
                     <span class="detail-value">${item.category}</span>
@@ -466,16 +581,15 @@ function displayItems(items, containerId) {
                     <span class="detail-label">Brand:</span>
                     <span class="detail-value">${item.brand}</span>
                 </div>` : ''}
-                ${item.size ? `
+                ${item.variant ? `
                 <div class="detail-item">
-                    <span class="detail-label">Size:</span>
-                    <span class="detail-value">${item.size}</span>
+                    <span class="detail-label">Variant:</span>
+                    <span class="detail-value">${item.variant}</span>
                 </div>` : ''}
-                ${item.color ? `
-                <div class="detail-item">
-                    <span class="detail-label">Color:</span>
-                    <span class="detail-value">${item.color}</span>
-                </div>` : ''}
+                <div class="detail-item" style="font-size: 0.85em; color: #6b7280;">
+                    <span class="detail-label">DB ID:</span>
+                    <span class="detail-value">${item.id}</span>
+                </div>
             </div>
             ${item.description ? `<p style="margin-top: 10px; color: #718096;">${item.description}</p>` : ''}
         </div>
@@ -498,6 +612,11 @@ function displayInventory(inventoryItems, containerId) {
                     <span class="item-name">${inv.itemName || `Item ID: ${inv.itemId}`}</span>
                     <span class="stock-level ${stockLevel}">${inv.quantity} in stock</span>
                 </div>
+                ${inv.itemSku ? `
+                <div class="sku-info">
+                    <strong>SKU:</strong> <span style="font-family: monospace; color: #2563eb; font-weight: bold;">${inv.itemSku}</span>
+                    ${inv.itemUpc ? `<br><strong>UPC:</strong> <span style="font-family: monospace;">${inv.itemUpc}</span>` : ''}
+                </div>` : ''}
                 <div class="stock-info">
                     <div>
                         <strong>Available:</strong> ${inv.quantity}<br>
@@ -509,6 +628,7 @@ function displayInventory(inventoryItems, containerId) {
                     </div>
                 </div>
                 ${inv.storeName ? `<p><strong>Store:</strong> ${inv.storeName}</p>` : ''}
+                ${inv.itemId ? `<p style="font-size: 0.85em; color: #6b7280;"><strong>DB ID:</strong> ${inv.itemId}</p>` : ''}
             </div>
         `;
     }).join('');
@@ -842,6 +962,193 @@ async function getAllSales() {
         console.error('Error getting sales:', error);
         displayError('Error getting sales: ' + (error.message || 'Unknown error'));
     }
+}
+
+// ========================================
+// SKU AND BARCODE FUNCTIONS
+// ========================================
+
+/**
+ * Generate SKU for the current item form
+ */
+async function generateSKUForItem() {
+    const category = document.getElementById('item-category').value;
+    const brand = document.getElementById('item-brand').value;
+    const variant = document.getElementById('item-variant').value;
+    
+    if (!category || !brand) {
+        api.showMessage('Category and Brand are required for SKU generation', 'error');
+        return false;
+    }
+    
+    try {
+        const result = await api.makeRequest('/items/generate-sku', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                category: category, 
+                brand: brand, 
+                variant: variant 
+            })
+        });
+        
+        if (result.ok) {
+            document.getElementById('item-sku').value = result.data.sku;
+            document.getElementById('item-upc').value = result.data.upc;
+            updateSKUPreview();
+            api.showMessage('SKU generated successfully: ' + result.data.sku, 'success');
+            return true;
+        } else {
+            api.showMessage('Failed to generate SKU: ' + (result.data?.error || 'Unknown error'), 'error');
+            return false;
+        }
+    } catch (error) {
+        console.error('Error generating SKU:', error);
+        api.showMessage('Error generating SKU: ' + error.message, 'error');
+        return false;
+    }
+}
+
+/**
+ * Update SKU preview as user types
+ */
+function updateSKUPreview() {
+    const category = document.getElementById('item-category').value;
+    const brand = document.getElementById('item-brand').value;
+    const variant = document.getElementById('item-variant').value;
+    
+    const previewElement = document.getElementById('sku-preview');
+    
+    if (category && brand) {
+        const categoryCode = getCategoryCode(category);
+        const brandCode = getBrandCode(brand);
+        const variantCode = variant ? cleanForSKU(variant) : '';
+        
+        let preview = `${categoryCode}-${brandCode}`;
+        if (variantCode) {
+            preview += `-${variantCode}`;
+        }
+        preview += '-XXX';
+        
+        previewElement.textContent = `Preview: ${preview}`;
+        previewElement.style.color = '#28a745';
+    } else {
+        previewElement.textContent = 'Enter category and brand to see SKU preview';
+        previewElement.style.color = '#666';
+    }
+}
+
+/**
+ * Get item by SKU
+ */
+async function getItemBySKU() {
+    const sku = document.getElementById('get-sku').value;
+    
+    if (!sku) {
+        api.showMessage('Please enter a SKU', 'error');
+        return;
+    }
+    
+    try {
+        const result = await api.makeRequest(`/items/by-sku/${encodeURIComponent(sku)}`, {
+            method: 'GET'
+        });
+        
+        if (result.ok) {
+            document.getElementById('sku-item').innerHTML = formatItemDisplay(result.data);
+            displayResponse(result.data);
+        } else {
+            document.getElementById('sku-item').innerHTML = '<p style="color: #dc3545;">Item not found</p>';
+            api.showMessage('Item not found with SKU: ' + sku, 'error');
+        }
+    } catch (error) {
+        console.error('Error getting item by SKU:', error);
+        api.showMessage('Error getting item: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Get item by UPC
+ */
+async function getItemByUPC() {
+    const upc = document.getElementById('get-upc').value;
+    
+    if (!upc) {
+        api.showMessage('Please enter a UPC', 'error');
+        return;
+    }
+    
+    try {
+        const result = await api.makeRequest(`/items/by-upc/${encodeURIComponent(upc)}`, {
+            method: 'GET'
+        });
+        
+        if (result.ok) {
+            document.getElementById('upc-item').innerHTML = formatItemDisplay(result.data);
+            displayResponse(result.data);
+        } else {
+            document.getElementById('upc-item').innerHTML = '<p style="color: #dc3545;">Item not found</p>';
+            api.showMessage('Item not found with UPC: ' + upc, 'error');
+        }
+    } catch (error) {
+        console.error('Error getting item by UPC:', error);
+        api.showMessage('Error getting item: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Helper function to format item display
+ */
+function formatItemDisplay(item) {
+    return `
+        <div class="item-details">
+            <h4>${item.name} (ID: ${item.id})</h4>
+            <p><strong>SKU:</strong> ${item.sku || 'Not set'}</p>
+            <p><strong>UPC:</strong> ${item.upc || 'Not set'}</p>
+            <p><strong>Category:</strong> ${item.category}</p>
+            <p><strong>Brand:</strong> ${item.brand || 'Not set'}</p>
+            <p><strong>Variant:</strong> ${item.variant || 'Not set'}</p>
+            <p><strong>Price:</strong> $${item.price.toFixed(2)}</p>
+            <p><strong>Description:</strong> ${item.description || 'No description'}</p>
+        </div>
+    `;
+}
+
+// Helper functions for SKU generation
+function getCategoryCode(category) {
+    if (!category) return 'GEN';
+    const upper = category.toUpperCase();
+    if (upper.includes('ELECTRONIC') || upper.includes('TECH')) return 'ELE';
+    if (upper.includes('CLOTH') || upper.includes('APPAREL')) return 'CLO';
+    if (upper.includes('FOOD') || upper.includes('BEVERAGE')) return 'FOO';
+    if (upper.includes('BOOK') || upper.includes('MEDIA')) return 'BOO';
+    if (upper.includes('HOME') || upper.includes('FURNITURE')) return 'HOM';
+    if (upper.includes('SPORT') || upper.includes('FITNESS')) return 'SPO';
+    if (upper.includes('BEAUTY') || upper.includes('COSMETIC')) return 'BEA';
+    if (upper.includes('AUTO') || upper.includes('CAR')) return 'AUT';
+    if (upper.includes('TOY') || upper.includes('GAME')) return 'TOY';
+    if (upper.includes('TOOL') || upper.includes('HARDWARE')) return 'TOL';
+    return 'GEN';
+}
+
+function getBrandCode(brand) {
+    if (!brand) return 'GEN';
+    const upper = brand.toUpperCase();
+    if (upper.includes('SAMSUNG')) return 'SAM';
+    if (upper.includes('APPLE')) return 'APP';
+    if (upper.includes('NIKE')) return 'NIK';
+    if (upper.includes('ADIDAS')) return 'ADI';
+    if (upper.includes('SONY')) return 'SON';
+    if (upper.includes('MICROSOFT')) return 'MIC';
+    if (upper.includes('GOOGLE')) return 'GOO';
+    if (upper.includes('COCA')) return 'COK';
+    if (upper.includes('PEPSI')) return 'PEP';
+    return cleanForSKU(brand);
+}
+
+function cleanForSKU(input) {
+    if (!input) return 'GEN';
+    const cleaned = input.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    return cleaned.substring(0, 6) || 'GEN';
 }
 
 // Initialize the application

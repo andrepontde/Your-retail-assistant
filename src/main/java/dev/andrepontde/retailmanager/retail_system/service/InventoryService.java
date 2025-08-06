@@ -281,6 +281,64 @@ public class InventoryService {
     }
 
     // ================================
+    // SKU-BASED OPERATIONS
+    // ================================
+
+    /**
+     * Add stock by SKU to current user's store.
+     */
+    public InventoryDTO addStockBySKU(String sku, Integer quantity) {
+        // Find item by SKU
+        Optional<Item> itemOpt = itemRepository.findBySku(sku);
+        if (itemOpt.isEmpty()) {
+            throw new RuntimeException("Item with SKU " + sku + " not found");
+        }
+        
+        // Get current user's store
+        Long storeId = userService.getCurrentUserStoreId();
+        
+        return addStock(itemOpt.get().getId(), quantity);
+    }
+
+    /**
+     * Remove stock by SKU from current user's store.
+     */
+    public InventoryDTO removeStockBySKU(String sku, Integer quantity) {
+        // Find item by SKU
+        Optional<Item> itemOpt = itemRepository.findBySku(sku);
+        if (itemOpt.isEmpty()) {
+            throw new RuntimeException("Item with SKU " + sku + " not found");
+        }
+        
+        // Get current user's store
+        Long storeId = userService.getCurrentUserStoreId();
+        
+        return removeStock(itemOpt.get().getId(), quantity);
+    }
+
+    /**
+     * Get stock level by SKU for current user's store.
+     */
+    public InventoryDTO getStockBySKU(String sku) {
+        // Find item by SKU
+        Optional<Item> itemOpt = itemRepository.findBySku(sku);
+        if (itemOpt.isEmpty()) {
+            throw new RuntimeException("Item with SKU " + sku + " not found");
+        }
+        
+        // Get current user's store
+        Long storeId = userService.getCurrentUserStoreId();
+        
+        // Find inventory for this item and store
+        Optional<Inventory> inventoryOpt = findInventoryEntity(itemOpt.get().getId(), storeId);
+        if (inventoryOpt.isEmpty()) {
+            throw new RuntimeException("No inventory found for SKU " + sku + " in current store");
+        }
+        
+        return convertToDTO(inventoryOpt.get());
+    }
+
+    // ================================
     // HELPER METHODS
     // ================================
 

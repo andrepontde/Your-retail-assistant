@@ -1,6 +1,8 @@
 package dev.andrepontde.retailmanager.retail_system.controller;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import dev.andrepontde.retailmanager.retail_system.dto.ItemDTO;
 import dev.andrepontde.retailmanager.retail_system.service.ItemService;
+import dev.andrepontde.retailmanager.retail_system.service.SKUService;
 
 
 
@@ -24,6 +27,9 @@ import dev.andrepontde.retailmanager.retail_system.service.ItemService;
 public class ItemController {
     @Autowired
     private ItemService itemService;
+    
+    @Autowired
+    private SKUService skuService;
 
     // CREATE - Add a new item
     @PostMapping
@@ -155,6 +161,126 @@ public class ItemController {
             return new ResponseEntity<>(items, HttpStatus.OK);
         } catch (Exception e) {
             // For any unexpected errors, return 500 Internal Server Error
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // ========================================
+    // SKU AND BARCODE MANAGEMENT ENDPOINTS
+    // ========================================
+
+    /**
+     * Generate SKU for item based on category, brand, and variant.
+     * 
+     * POST /api/items/generate-sku
+     * {
+     *   "category": "Electronics",
+     *   "brand": "Samsung",
+     *   "variant": "32GB"
+     * }
+     */
+    @PostMapping("/generate-sku")
+    public ResponseEntity<Map<String, String>> generateSKU(@RequestBody Map<String, String> request) {
+        try {
+            String category = request.get("category");
+            String brand = request.get("brand");
+            String variant = request.get("variant");
+            
+            if (category == null || category.trim().isEmpty()) {
+                return new ResponseEntity<>(Map.of("error", "Category is required"), HttpStatus.BAD_REQUEST);
+            }
+            
+            if (brand == null || brand.trim().isEmpty()) {
+                return new ResponseEntity<>(Map.of("error", "Brand is required"), HttpStatus.BAD_REQUEST);
+            }
+            
+            String sku = skuService.generateSKU(category, brand, variant);
+            String upc = skuService.generateUPC();
+            
+            // Ensure uniqueness
+            while (skuService.skuExists(sku)) {
+                sku = skuService.generateSKU(category, brand, variant);
+            }
+            
+            while (skuService.upcExists(upc)) {
+                upc = skuService.generateUPC();
+            }
+            
+            Map<String, String> response = Map.of(
+                "sku", sku,
+                "upc", upc,
+                "categoryCode", skuService.getCategoryCode(category),
+                "brandCode", skuService.getBrandCode(brand)
+            );
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Map.of("error", "Failed to generate SKU: " + e.getMessage()), 
+                                      HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Validate SKU format and check availability.
+     * 
+     * GET /api/items/validate-sku/{sku}
+     */
+    @GetMapping("/validate-sku/{sku}")
+    public ResponseEntity<Map<String, Object>> validateSKU(@PathVariable String sku) {
+        try {
+            boolean validFormat = skuService.isValidSKU(sku);
+            boolean exists = skuService.skuExists(sku);
+            
+            Map<String, Object> response = Map.of(
+                "sku", sku,
+                "validFormat", validFormat,
+                "exists", exists,
+                "available", validFormat && !exists
+            );
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Map.of("error", "Failed to validate SKU"), 
+                                      HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Find item by SKU.
+     * 
+     * GET /api/items/by-sku/{sku}
+     */
+    @GetMapping("/by-sku/{sku}")
+    public ResponseEntity<ItemDTO> getItemBySKU(@PathVariable String sku) {
+        try {
+            Optional<ItemDTO> item = itemService.getItemBySKU(sku);
+            
+            if (item.isPresent()) {
+                return new ResponseEntity<>(item.get(), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Find item by UPC.
+     * 
+     * GET /api/items/by-upc/{upc}
+     */
+    @GetMapping("/by-upc/{upc}")
+    public ResponseEntity<ItemDTO> getItemByUPC(@PathVariable String upc) {
+        try {
+            Optional<ItemDTO> item = itemService.getItemByUPC(upc);
+            
+            if (item.isPresent()) {
+                return new ResponseEntity<>(item.get(), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
